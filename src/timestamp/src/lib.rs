@@ -14,17 +14,14 @@ use uhlc::NTP64;
 const SEEDING_INTERVAL: Duration = Duration::from_secs(3600);
 
 thread_local! {
-    static TIMESTAMP_1: HLC =  HLCBuilder::new()
-    .with_clock(clock)
-    .with_max_delta(Duration::from_secs(0))
-    .build();
-
-    static TIMESTAMP_2: HLC =  HLCBuilder::new()
+    static GLOBAL_TIMESTAMP: HLC =  HLCBuilder::new()
     .with_clock(clock)
     .with_max_delta(Duration::from_secs(1))
     .build();
 
     static RNG: RefCell<Option<ChaCha20Rng>> = RefCell::new(None);
+
+    static COUNTER: RefCell<u64> = RefCell::new(0_u64);
 }
 
 async fn seed_randomness() {
@@ -79,31 +76,43 @@ fn post_upgrade() {
 
 #[ic_cdk::update]
 fn method_1() {
-    TIMESTAMP_1.with(|mut time| {
-        ic_cdk::println!(
-            "Method 1 Current time : {:#?} ",
-            time.borrow_mut().new_timestamp()
-        );
-    })
+    GLOBAL_TIMESTAMP.with(|mut time| {
+        COUNTER.with(|c| {
+            *c.borrow_mut() += 1;
+            ic_cdk::println!(
+                "Method 1 Current time : {:#?} and counter value {}",
+                time.borrow_mut().new_timestamp(),
+                c.borrow()
+            );
+        });
+    });
 }
 
 #[ic_cdk::update]
 fn method_2() {
-    TIMESTAMP_1.with(|mut time| {
-        let t1 = time.borrow_mut().new_timestamp();
-        TIMESTAMP_2.with(|mut time| {
-            time.borrow_mut().update_with_timestamp(&t1).unwrap();
-            ic_cdk::println!("Method 2 Current time : {:#?} ", t1);
-        })
-    })
+    GLOBAL_TIMESTAMP.with(|mut time| {
+        COUNTER.with(|c| {
+            *c.borrow_mut() += 1;
+            ic_cdk::println!(
+                "Method 2 Current time : {:#?} and counter value {}",
+                time.borrow_mut().new_timestamp(),
+                c.borrow()
+            );
+        });
+    });
 }
 
 #[ic_cdk::update]
 fn queue() {
-    for _ in 0..100 {
-        // method 1 will always follow method 2
-        // second timestamp accepts a drift a 1 second from first timestamp
-        method_1();
-        method_2();
+    let mut buf = [0_u8; 10];
+    RNG.with_borrow_mut(|rng| rng.as_mut().unwrap().fill_bytes(&mut buf));
+    for i in 0..10 {
+        if buf[i] % 2 == 0 {
+            method_1();
+            method_2();
+        } else {
+            method_2();
+            method_1();
+        }
     }
 }
