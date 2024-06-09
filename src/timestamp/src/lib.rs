@@ -84,7 +84,6 @@ fn post_upgrade() {
     schedule_seeding(Duration::ZERO);
 }
 
-#[ic_cdk::update]
 fn method_1() {
     GLOBAL_TIMESTAMP.with(|mut time| {
         COUNTER.with(|c| {
@@ -101,7 +100,6 @@ fn method_1() {
     });
 }
 
-#[ic_cdk::update]
 fn method_2() {
     GLOBAL_TIMESTAMP.with(|mut time| {
         COUNTER.with(|c| {
