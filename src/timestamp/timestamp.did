@@ -1,4 +1,5 @@
 service : {
     "timestamp": () -> ();
     "queue": () -> ();
+    "get_log": (nat64) -> (vec text);
 }

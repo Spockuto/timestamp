@@ -319,6 +319,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-stable-structures"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07e2282054c8ddf0cb2a7abf5c174c373917b4345c9a096ae4aa7f7185cdcdc7"
+dependencies = [
+ "ic_principal",
+]
+
+[[package]]
 name = "ic0"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -638,6 +647,7 @@ dependencies = [
  "getrandom",
  "ic-cdk",
  "ic-cdk-timers",
+ "ic-stable-structures",
  "ic0 0.23.0",
  "rand_chacha",
  "uhlc",
